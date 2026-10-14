@@ -1,0 +1,40 @@
+.idea
+.temp
+
+# build output
+dist/
+.output/
+
+# dependencies
+node_modules/
+
+scripts/developer-roadmap
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# local database + backend runtime files
+backend/data/
+backend/server.log
+*.db
+*.db-shm
+*.db-wal
+
+# macOS-specific files
+.DS_Store
+/test-results/
+/playwright-report/
+/playwright/.cache/
+tests-examples
+*.csv
+
+/editor/*
+!/editor/readonly-editor.tsx

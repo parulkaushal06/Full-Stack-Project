@@ -1,0 +1,18 @@
+{
+  "name": "roadmap-sh-rebuild",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "roadmap.sh rebuilt with a plain HTML/CSS/JS frontend and a full REST API backend (Node.js + Express + SQLite)",
+  "scripts": {
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "migrate": "npm --prefix backend run migrate",
+    "seed": "npm --prefix backend run seed",
+    "test": "npm --prefix backend test",
+    "install:backend": "npm --prefix backend install"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}

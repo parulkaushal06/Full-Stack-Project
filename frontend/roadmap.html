@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roadmap - roadmaps.sh</title>
+  <meta name="description" content="Step by step roadmap with resources for every topic." />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/index.html">
+        <span class="logo" aria-hidden="true">R</span>
+        <span>roadmaps<span class="accent">.</span>sh</span>
+      </a>
+      <nav class="site-nav" aria-label="Main">
+        <a class="nav-link" href="/index.html">Roadmaps</a>
+        <a class="nav-link" href="/api/docs">API docs</a>
+        <span data-auth-area></span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <p class="breadcrumbs"><a href="/index.html">← All roadmaps</a></p>
+
+    <p class="status-line" role="status" aria-live="polite" data-status>Loading roadmap…</p>
+
+    <div data-roadmap-root hidden>
+      <header class="roadmap-header">
+        <div>
+          <h1 data-title></h1>
+          <div class="badges" data-badges></div>
+        </div>
+        <button class="btn btn-sm" type="button" data-share>Copy link</button>
+      </header>
+
+      <p data-description style="color: var(--muted); margin-top: -0.4rem;"></p>
+
+      <section class="progress-panel" aria-labelledby="progress-title">
+        <div class="row">
+          <strong id="progress-title">Your progress</strong>
+          <span data-progress-text class="page-info"></span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-progress-bar>
+          <div class="progress-fill" style="width: 0%" data-progress-fill></div>
+        </div>
+        <p class="hint" data-progress-hint style="color: var(--muted); font-size: 0.85rem; margin: 0.5rem 0 0;"></p>
+      </section>
+
+      <section class="article" data-article hidden aria-label="What is this roadmap about"></section>
+
+      <section class="roadmap-visual" data-visual hidden aria-label="Roadmap diagram">
+        <div class="scroll">
+          <img data-image alt="" />
+        </div>
+        <p class="caption">Full size diagram - open in a new tab for details: <a data-image-link href="#" target="_blank" rel="noopener">open image</a></p>
+      </section>
+
+      <section aria-labelledby="topics-title">
+        <h2 id="topics-title" style="font-size: 1.2rem;">Topics</h2>
+        <p class="status-line" data-topics-status role="status" aria-live="polite">Loading topics…</p>
+        <div class="topic-list" data-topics></div>
+        <p class="field-error" data-progress-error aria-live="assertive"></p>
+      </section>
+
+      <section aria-labelledby="related-title" hidden data-related-section>
+        <h2 id="related-title" style="font-size: 1.2rem; margin-top: 2rem;">Related roadmaps</h2>
+        <div class="chip-row" data-related></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>Rebuilt with plain HTML, CSS &amp; JavaScript + a REST API.</span>
+      <span><a href="/api/docs">API reference</a></span>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/roadmap.js"></script>
+</body>
+</html>

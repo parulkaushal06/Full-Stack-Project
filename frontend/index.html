@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roadmaps - Step by step guides to become a developer</title>
+  <meta name="description" content="Community driven developer roadmaps: frontend, backend, DevOps, data, AI and more." />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/index.html">
+        <span class="logo" aria-hidden="true">R</span>
+        <span>roadmaps<span class="accent">.</span>sh</span>
+      </a>
+      <nav class="site-nav" aria-label="Main">
+        <a class="nav-link" href="/index.html">Roadmaps</a>
+        <a class="nav-link" href="/api/docs">API docs</a>
+        <span data-auth-area></span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">Step by step guides to become a <span class="accent">developer</span></h1>
+      <p>
+        Community driven roadmaps for frontend, backend, DevOps, data and AI roles.
+        Pick a path, track your progress and learn in public.
+      </p>
+    </section>
+
+    <section aria-labelledby="browse-title">
+      <h2 id="browse-title" class="visually-hidden">Browse roadmaps</h2>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <label class="visually-hidden" for="search">Search roadmaps</label>
+          <input id="search" type="search" placeholder="Search roadmaps… (e.g. react, devops)" autocomplete="off" />
+        </div>
+
+        <label class="visually-hidden" for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="">Any difficulty</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+
+        <label class="visually-hidden" for="sort">Sort by</label>
+        <select id="sort">
+          <option value="order">Most popular</option>
+          <option value="title">Title A → Z</option>
+          <option value="category">Category</option>
+          <option value="difficulty">Difficulty</option>
+          <option value="created_at">Newest</option>
+        </select>
+      </div>
+
+      <div class="chip-row" role="group" aria-label="Filter by category" data-chips>
+        <button class="chip" type="button" data-category="" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-category="role" aria-pressed="false">Roles</button>
+        <button class="chip" type="button" data-category="language" aria-pressed="false">Languages</button>
+        <button class="chip" type="button" data-category="framework" aria-pressed="false">Frameworks</button>
+        <button class="chip" type="button" data-category="tool" aria-pressed="false">Tools</button>
+        <button class="chip" type="button" data-category="database" aria-pressed="false">Databases</button>
+        <button class="chip" type="button" data-category="concept" aria-pressed="false">Concepts</button>
+      </div>
+
+      <p class="status-line" role="status" aria-live="polite" data-status>Loading roadmaps…</p>
+
+      <div class="grid" data-grid hidden></div>
+
+      <nav class="pager" aria-label="Pagination" data-pager hidden>
+        <button class="btn btn-sm" type="button" data-prev>← Previous</button>
+        <span class="page-info" data-page-info></span>
+        <button class="btn btn-sm" type="button" data-next>Next →</button>
+      </nav>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>Rebuilt with plain HTML, CSS &amp; JavaScript + a REST API.</span>
+      <span>
+        <a href="/api/docs">API reference</a> ·
+        <a href="/api/v1/health">Health</a>
+      </span>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/home.js"></script>
+</body>
+</html>

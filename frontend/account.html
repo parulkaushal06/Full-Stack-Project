@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your account - roadmaps.sh</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/index.html">
+        <span class="logo" aria-hidden="true">R</span>
+        <span>roadmaps<span class="accent">.</span>sh</span>
+      </a>
+      <nav class="site-nav" aria-label="Main">
+        <a class="nav-link" href="/index.html">Roadmaps</a>
+        <a class="nav-link" href="/api/docs">API docs</a>
+        <span data-auth-area></span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <p class="status-line" role="status" aria-live="polite" data-status>Loading your account…</p>
+
+    <div class="account-grid" data-account hidden>
+      <aside class="profile-card" aria-label="Profile">
+        <div class="avatar" data-avatar aria-hidden="true">?</div>
+        <h2 data-username></h2>
+        <p class="role" data-email></p>
+        <p><span class="badge neutral" data-role></span></p>
+        <p data-admin-note hidden style="font-size: 0.85rem;">
+          <a href="/api/docs">You are an admin → open the API docs</a>
+        </p>
+        <button class="btn btn-danger btn-block" type="button" data-logout style="margin-top: 0.8rem;">
+          Log out
+        </button>
+      </aside>
+
+      <section aria-labelledby="progress-heading">
+        <h1 id="progress-heading" style="font-size: 1.3rem; margin-top: 0;">Your roadmap progress</h1>
+        <p class="status-line" data-progress-status role="status" aria-live="polite">Loading progress…</p>
+        <div class="progress-list" data-progress-list></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>Private, per-user data - only you can see it (scoped by session user id).</span>
+      <span><a href="/api/docs">API reference</a></span>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/account.js"></script>
+</body>
+</html>
