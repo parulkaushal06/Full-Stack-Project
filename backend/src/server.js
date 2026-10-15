@@ -13,6 +13,9 @@ if (!result.skipped) {
     `[seed] ${result.roadmaps} roadmaps, ${result.topics} topics, ${result.articles} articles`,
   );
 }
+if (result.resources || result.quizzes) {
+  console.log(`[seed] ${result.resources} resources, ${result.quizzes} quizzes`);
+}
 if (result.adminId) {
   console.log(`[seed] created admin user "${config.adminUsername}" (${config.adminEmail})`);
 }

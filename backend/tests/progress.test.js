@@ -26,40 +26,40 @@ describe('per-user progress', () => {
     await client(app).get('/api/v1/me/progress').expect(401);
     await client(app)
       .put('/api/v1/me/progress/frontend/100-internet')
-      .send({ status: 'done' })
+      .send({ status: 'completed' })
       .expect(401);
   });
 
   it('PUT upserts topic progress (idempotent)', async () => {
     const first = await user1
       .put('/api/v1/me/progress/frontend/100-internet')
-      .send({ status: 'done' })
+      .send({ status: 'completed' })
       .expect(200);
     expect(first.body.data).toMatchObject({
       roadmapSlug: 'frontend',
       topicKey: '100-internet',
-      status: 'done',
+      status: 'completed',
     });
 
     const repeat = await user1
       .put('/api/v1/me/progress/frontend/100-internet')
-      .send({ status: 'done' })
+      .send({ status: 'completed' })
       .expect(200);
-    expect(repeat.body.data.status).toBe('done');
+    expect(repeat.body.data.status).toBe('completed');
 
     const update = await user1
       .put('/api/v1/me/progress/frontend/100-internet')
-      .send({ status: 'learning' })
+      .send({ status: 'in_progress' })
       .expect(200);
-    expect(update.body.data.status).toBe('learning');
+    expect(update.body.data.status).toBe('in_progress');
 
     await user1
       .put('/api/v1/me/progress/frontend/100-internet')
-      .send({ status: 'done' })
+      .send({ status: 'completed' })
       .expect(200);
     await user1
       .put('/api/v1/me/progress/frontend/101-html')
-      .send({ status: 'learning' })
+      .send({ status: 'in_progress' })
       .expect(200);
   });
 
@@ -101,7 +101,7 @@ describe('per-user progress', () => {
 
     const unknownTopic = await user1
       .put('/api/v1/me/progress/frontend/999-ghost')
-      .send({ status: 'done' })
+      .send({ status: 'completed' })
       .expect(404);
     expect(unknownTopic.body.error.code).toBe('topic_not_found');
   });
