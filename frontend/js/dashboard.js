@@ -71,8 +71,8 @@ function fillTopicList(selector, items, emptyMessage) {
         <a href="/roadmap.html?slug=${encodeURIComponent(roadmap.slug)}">
           ${escapeHtml(roadmap.title)} › ${escapeHtml(topic.label)}
         </a>
-        <span class="badge ${topic.status === 'learning' ? 'intermediate' : 'neutral'}">
-          ${topic.status === 'learning' ? 'In progress' : 'Not started'}
+        <span class="badge ${topic.status === 'in_progress' ? 'intermediate' : 'neutral'}">
+          ${topic.status === 'in_progress' ? 'In progress' : 'Not started'}
         </span>
       </li>`,
     )
@@ -89,8 +89,8 @@ function renderTopicLists(roadmaps) {
   const pending = [];
   for (const roadmap of roadmaps) {
     for (const topic of roadmap.topics) {
-      if (topic.status === 'learning') ongoing.push({ roadmap, topic });
-      else if (topic.status !== 'done') pending.push({ roadmap, topic });
+      if (topic.status === 'in_progress') ongoing.push({ roadmap, topic });
+      else if (topic.status !== 'completed') pending.push({ roadmap, topic });
     }
   }
   fillTopicList(

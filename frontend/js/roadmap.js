@@ -57,8 +57,8 @@ async function loadProgress() {
 function progressStats() {
   const total = roadmap?.topics_count || 0;
   const values = Object.values(progress);
-  const done = values.filter((s) => s === 'done').length;
-  const learning = values.filter((s) => s === 'learning').length;
+  const done = values.filter((s) => s === 'completed').length;
+  const learning = values.filter((s) => s === 'in_progress').length;
   return { total, done, learning, percent: total ? Math.round((done / total) * 100) : 0 };
 }
 
@@ -79,7 +79,7 @@ function renderProgressPanel() {
  *  In Progress -> 'learning', Not Started -> progress row cleared (DELETE). */
 function statusOf(topicKey) {
   const saved = progress[topicKey];
-  return saved === 'done' || saved === 'learning' ? saved : 'not_started';
+  return saved === 'completed' || saved === 'in_progress' ? saved : 'not_started'
 }
 
 function renderStatusStates() {
@@ -88,13 +88,13 @@ function renderStatusStates() {
     for (const radio of item.querySelectorAll('[data-status-radio]')) {
       radio.checked = radio.value === current;
     }
-    item.classList.toggle('is-done', current === 'done');
-    item.classList.toggle('is-learning', current === 'learning');
+    item.classList.toggle('is-done', current === 'completed');
+    item.classList.toggle('is-learning', current === 'in_progress');
     const pill = item.querySelector('[data-done-pill]');
     if (pill) {
       pill.hidden = current === 'not_started';
-      pill.textContent = current === 'done' ? 'Completed ✓' : 'In progress';
-      pill.classList.toggle('learning', current === 'learning');
+      pill.textContent = current === 'completed' ? 'Completed ✓' : 'In progress';
+      pill.classList.toggle('learning', current === 'in_progress');
     }
   }
   renderProgressPanel();
@@ -152,8 +152,8 @@ function renderTopics(topics) {
         <div class="topic-body">
           <div class="status-toggle" role="group" aria-label="Topic status">
             <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="not_started" data-status-radio /> Not Started</label>
-            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="learning" data-status-radio /> In Progress</label>
-            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="done" data-status-radio /> Completed</label>
+            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="in_progress" data-status-radio /> In Progress</label>
+            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="completed" data-status-radio /> Completed</label>
           </div>
           <div class="content" data-content aria-live="polite">
             <p class="status-line">Loading topic content…</p>
