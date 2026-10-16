@@ -142,17 +142,20 @@ router.get('/progress/:slug', validate({ params: slugParams }), (req, res, next)
       req.user.id,
       slug,
     );
-    const done = rows.filter((r) => r.status === 'done').length;
-    const learning = rows.filter((r) => r.status === 'learning').length;
+    const completed = rows.filter((r) => r.status === 'completed').length;
+    const inProgress = rows.filter((r) => r.status === 'in_progress').length;
 
     return res.json({
       data: {
         roadmapSlug: slug,
         roadmapTitle: roadmap.title,
         totalTopics: Number(total),
-        done,
-        learning,
-        percent: total ? Math.round((done / total) * 100) : 0,
+        completed,
+        inProgress,
+        pending: Number(total) - completed - inProgress, // not completed + not in progress
+        done: completed, // legacy alias
+        learning: inProgress, // legacy alias
+        percent: total ? Math.round((completed / total) * 100) : 0,
         topics: rows,
       },
     });
@@ -167,7 +170,7 @@ router.put(
   validate({
     params: topicParams,
     body: Joi.object({
-      status: Joi.string().valid('done', 'learning', 'skipped').default('done'),
+      status: Joi.string().valid('not_started', 'in_progress', 'completed').default('completed'),
     }),
   }),
   (req, res, next) => {
@@ -197,7 +200,9 @@ router.put(
       );
 
       const row = query.get(
-        `SELECT roadmap_slug AS roadmapSlug, topic_key AS topicKey, status, updated_at AS updatedAt
+        `SELECT roadmap_slug AS roadmapSlug, topic_key AS topicKey, status,
+                started_at AS startedAt, completed_at AS completedAt,
+                last_accessed_at AS lastAccessedAt, updated_at AS updatedAt
            FROM user_progress WHERE user_id = ? AND roadmap_slug = ? AND topic_key = ?`,
         req.user.id,
         slug,

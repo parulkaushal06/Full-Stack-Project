@@ -5,6 +5,8 @@ import { query, getDb } from './index.js';
 import { migrate } from './migrate.js';
 import { readRoadmapMeta } from '../lib/frontmatter.js';
 import { hashPassword } from '../lib/password.js';
+import { seedResources } from './seed_resources.js';
+import { seedQuizzes } from './seed_quizzes.js';
 
 /**
  * Static seed metadata (category / difficulty / tag facets used for
@@ -225,8 +227,10 @@ export function runSeed({ force = false } = {}) {
   migrate();
   getDb();
   const stats = seedRoadmaps({ force });
+  const resources = seedResources(); // YouTube + article links extracted from the content
+  const quizzes = seedQuizzes(); // sample MCQ quizzes
   const adminId = seedAdmin();
-  return { ...stats, adminId };
+  return { ...stats, ...resources, quizzes: quizzes.quizzes, questions: quizzes.questions, adminId };
 }
 
 // CLI: npm run seed [-- --force]
@@ -237,6 +241,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     result.skipped
       ? 'Database already seeded (use --force to re-seed).'
       : `Seeded ${result.roadmaps} roadmaps, ${result.topics} topics, ${result.articles} articles.`,
+  );
+  console.log(
+    `Resources added: ${result.resources}; quizzes added: ${result.quizzes} (${result.questions} questions).`,
   );
   if (result.adminId) console.log(`Created admin user "${config.adminUsername}".`);
 }

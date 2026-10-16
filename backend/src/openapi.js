@@ -297,7 +297,7 @@ export const openApiSpec = {
       put: {
         tags: ['Me'],
         summary: 'Mark a topic (idempotent upsert)',
-        requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['done', 'learning', 'skipped'], default: 'done' } } } } } },
+        requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['not_started', 'in_progress', 'completed'], default: 'completed' } } } } } },
         responses: {
           200: { description: 'Saved state', content: { 'application/json': { schema: { type: 'object', properties: { data: { $ref: '#/components/schemas/Progress' } } } } } },
           401: { $ref: '#/components/responses/Unauthorized' },
@@ -605,7 +605,7 @@ export const openApiSpec = {
         properties: {
           roadmapSlug: { type: 'string' },
           topicKey: { type: 'string' },
-          status: { type: 'string', enum: ['done', 'learning', 'skipped'] },
+          status: { type: 'string', enum: ['not_started', 'in_progress', 'completed'] },
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
@@ -614,8 +614,11 @@ export const openApiSpec = {
         properties: {
           roadmapSlug: { type: 'string' },
           totalTopics: { type: 'integer' },
-          done: { type: 'integer' },
-          learning: { type: 'integer' },
+          completed: { type: 'integer' },
+          inProgress: { type: 'integer' },
+          pending: { type: 'integer' },
+          done: { type: 'integer', description: 'legacy alias of completed' },
+          learning: { type: 'integer', description: 'legacy alias of inProgress' },
           percent: { type: 'integer' },
           topics: { type: 'array', items: { $ref: '#/components/schemas/Progress' } },
         },
