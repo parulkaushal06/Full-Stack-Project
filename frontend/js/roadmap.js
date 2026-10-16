@@ -11,7 +11,7 @@ const topicsStatus = document.querySelector('[data-topics-status]');
 const progressError = document.querySelector('[data-progress-error]');
 
 let roadmap = null;
-/** progress state: { [topicKey]: 'done' | 'learning' | 'skipped' } */
+/** progress state: { [topicKey]: 'done' | 'learning' } - an absent key = Not Started */
 let progress = {};
 
 const STORAGE_PREFIX = 'roadmap-progress:';
@@ -51,18 +51,21 @@ async function loadProgress() {
     progress = loadLocalProgress();
   }
   renderProgressPanel();
-  renderDoneStates();
+  renderStatusStates();
 }
 
 function progressStats() {
   const total = roadmap?.topics_count || 0;
-  const done = Object.values(progress).filter((s) => s === 'done').length;
-  return { total, done, percent: total ? Math.round((done / total) * 100) : 0 };
+  const values = Object.values(progress);
+  const done = values.filter((s) => s === 'done').length;
+  const learning = values.filter((s) => s === 'learning').length;
+  return { total, done, learning, percent: total ? Math.round((done / total) * 100) : 0 };
 }
 
 function renderProgressPanel() {
-  const { total, done, percent } = progressStats();
-  document.querySelector('[data-progress-text]').textContent = `${done} / ${total} topics · ${percent}%`;
+  const { total, done, learning, percent } = progressStats();
+  document.querySelector('[data-progress-text]').textContent =
+    `${done} of ${total} completed · ${learning} in progress · ${percent}%`;
   document.querySelector('[data-progress-fill]').style.width = `${percent}%`;
   const bar = document.querySelector('[data-progress-bar]');
   bar.setAttribute('aria-valuenow', String(percent));
@@ -71,41 +74,53 @@ function renderProgressPanel() {
     : 'Sign in to sync progress across devices - until then it is saved in this browser.';
 }
 
-function renderDoneStates() {
+/** Learner-facing status: 'not_started' (no saved row) | 'learning' | 'done'.
+ *  API/DB mapping (PRD terminology): Completed -> 'done',
+ *  In Progress -> 'learning', Not Started -> progress row cleared (DELETE). */
+function statusOf(topicKey) {
+  const saved = progress[topicKey];
+  return saved === 'done' || saved === 'learning' ? saved : 'not_started';
+}
+
+function renderStatusStates() {
   for (const item of topicsMount.querySelectorAll('[data-topic]')) {
-    const key = item.dataset.topic;
-    const checkbox = item.querySelector('input[type="checkbox"]');
-    const label = item.querySelector('.state-label');
-    const done = progress[key] === 'done';
-    if (checkbox) checkbox.checked = done;
-    item.classList.toggle('is-done', done);
-    if (label) label.textContent = done ? 'Completed' : 'Mark as completed';
+    const current = statusOf(item.dataset.topic);
+    for (const radio of item.querySelectorAll('[data-status-radio]')) {
+      radio.checked = radio.value === current;
+    }
+    item.classList.toggle('is-done', current === 'done');
+    item.classList.toggle('is-learning', current === 'learning');
     const pill = item.querySelector('[data-done-pill]');
-    if (pill) pill.hidden = !done;
+    if (pill) {
+      pill.hidden = current === 'not_started';
+      pill.textContent = current === 'done' ? 'Completed ✓' : 'In progress';
+      pill.classList.toggle('learning', current === 'learning');
+    }
   }
   renderProgressPanel();
 }
 
-async function toggleTopic(topicKey, checkbox) {
-  const wasDone = progress[topicKey] === 'done';
-  const nextDone = checkbox.checked;
+async function setTopicStatus(topicKey, next) {
+  // next: 'not_started' | 'learning' | 'done'
+  const was = progress[topicKey];
 
   // optimistic UI: state flips immediately, rolls back if the API fails
-  if (nextDone) progress[topicKey] = 'done';
-  else delete progress[topicKey];
-  renderDoneStates();
+  if (next === 'not_started') delete progress[topicKey];
+  else progress[topicKey] = next;
+  renderStatusStates();
   progressError.textContent = '';
 
   try {
     if (authStore.get().user) {
-      if (nextDone) {
-        await api.put(
-          `/me/progress/${encodeURIComponent(slug)}/${encodeURIComponent(topicKey)}`,
-          { status: 'done' },
-        );
-      } else {
+      if (next === 'not_started') {
+        // a cleared row represents "Not Started" (PRD progress terminology)
         await api.del(
           `/me/progress/${encodeURIComponent(slug)}/${encodeURIComponent(topicKey)}`,
+        );
+      } else {
+        await api.put(
+          `/me/progress/${encodeURIComponent(slug)}/${encodeURIComponent(topicKey)}`,
+          { status: next },
         );
       }
     } else {
@@ -113,9 +128,9 @@ async function toggleTopic(topicKey, checkbox) {
     }
   } catch (error) {
     // rollback
-    if (wasDone) progress[topicKey] = 'done';
+    if (was) progress[topicKey] = was;
     else delete progress[topicKey];
-    renderDoneStates();
+    renderStatusStates();
     progressError.textContent = showError(error);
   }
 }
@@ -131,14 +146,15 @@ function renderTopics(topics) {
         <summary>
           <span class="badge neutral">${escapeHtml(String(t.order_index))}</span>
           ${escapeHtml(t.label)}
-          <span class="badge beginner" data-done-pill hidden>Done ✓</span>
+          <span class="badge beginner" data-done-pill hidden>Completed ✓</span>
           <span class="chev" aria-hidden="true">›</span>
         </summary>
         <div class="topic-body">
-          <label class="done-toggle">
-            <input type="checkbox" data-done-checkbox />
-            <span class="state-label">Mark as completed</span>
-          </label>
+          <div class="status-toggle" role="group" aria-label="Topic status">
+            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="not_started" data-status-radio /> Not Started</label>
+            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="learning" data-status-radio /> In Progress</label>
+            <label><input type="radio" name="st-${escapeHtml(t.topic_key)}" value="done" data-status-radio /> Completed</label>
+          </div>
           <div class="content" data-content aria-live="polite">
             <p class="status-line">Loading topic content…</p>
           </div>
@@ -148,27 +164,25 @@ function renderTopics(topics) {
     )
     .join('');
 
-  renderDoneStates();
+  renderStatusStates();
 
   for (const details of topicsMount.querySelectorAll('details.topic')) {
     const key = details.dataset.topic;
     const summary = details.querySelector('summary');
-    const checkbox = details.querySelector('[data-done-checkbox]');
 
-    checkbox.addEventListener('change', () => toggleTopic(key, checkbox));
+    for (const radio of details.querySelectorAll('[data-status-radio]')) {
+      radio.addEventListener('change', () => {
+        if (radio.checked) setTopicStatus(key, radio.value);
+      });
+    }
 
-    // keep the checkbox click from also toggling <details> (cross-browser safe)
+    // keep status-control clicks from also toggling <details> (cross-browser safe)
     summary.addEventListener('click', (event) => {
-      if (event.target.closest('.done-toggle, input[type="checkbox"]')) {
+      if (event.target.closest('.status-toggle')) {
         event.preventDefault();
       }
     });
-    // clicking the label area (but not the summary itself) still toggles the box
-    details.querySelector('.done-toggle')?.addEventListener('click', (event) => {
-      event.preventDefault();
-      checkbox.checked = !checkbox.checked;
-      checkbox.dispatchEvent(new Event('change'));
-    });
+
 
     details.addEventListener('toggle', () => {
       if (details.open) loadTopicContent(details, key);

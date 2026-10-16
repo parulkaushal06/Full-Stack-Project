@@ -19,6 +19,7 @@ function renderNav(state) {
   if (state.user) {
     const initial = escapeHtml((state.user.username || '?').charAt(0).toUpperCase());
     mount.innerHTML = `
+      <a class="nav-link" href="/dashboard.html">Dashboard</a>
       <a class="nav-link" href="/account.html">Hello, ${escapeHtml(state.user.username)}</a>
       <a class="nav-link" href="/account.html" aria-label="Your account, avatar ${initial}">${initial}</a>
       <button class="btn btn-sm" type="button" data-logout>Log out</button>

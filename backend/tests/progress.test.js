@@ -114,3 +114,88 @@ describe('per-user progress', () => {
     expect(res.body.error.code).toBe('validation_error');
   });
 });
+
+describe('progress summary (dashboard)', () => {
+  let app;
+  let dash1;
+  let dash2;
+
+  beforeAll(async () => {
+    app = setupTestApp();
+    dash1 = client(app);
+    await dash1
+      .post('/api/v1/auth/register')
+      .send({ email: 'dash1@example.com', username: 'dashuser1', password: 'password123' })
+      .expect(201);
+    dash2 = client(app);
+    await dash2
+      .post('/api/v1/auth/register')
+      .send({ email: 'dash2@example.com', username: 'dashuser2', password: 'password123' })
+      .expect(201);
+  });
+
+  it('requires authentication', async () => {
+    await client(app).get('/api/v1/me/progress/summary').expect(401);
+  });
+
+  it('returns an empty summary for a brand new learner', async () => {
+    const res = await dash1.get('/api/v1/me/progress/summary').expect(200);
+    expect(res.body.data.totals).toEqual({ completed: 0, inProgress: 0, notStarted: 0, topics: 0 });
+    expect(res.body.data.overallPercent).toBe(0);
+    expect(res.body.data.roadmaps).toEqual([]);
+    expect(res.body.data.continueLearning).toBeNull();
+  });
+
+  it('counts Completed / In Progress / Not Started and picks Continue Learning', async () => {
+    await dash1
+      .put('/api/v1/me/progress/frontend/100-internet')
+      .send({ status: 'done' })
+      .expect(200);
+    await dash1
+      .put('/api/v1/me/progress/frontend/101-html')
+      .send({ status: 'learning' })
+      .expect(200);
+
+    const res = await dash1.get('/api/v1/me/progress/summary').expect(200);
+    const { data } = res.body;
+    expect(data.totals).toEqual({ completed: 1, inProgress: 1, notStarted: 0, topics: 2 });
+    expect(data.overallPercent).toBe(50);
+    expect(data.roadmaps).toHaveLength(1);
+    expect(data.roadmaps[0]).toMatchObject({
+      slug: 'frontend',
+      percent: 50,
+      completed: 1,
+      inProgress: 1,
+    });
+    expect(data.continueLearning).toMatchObject({ slug: 'frontend', topicKey: '101-html' });
+  });
+
+  it('treats a cleared status as Not Started and falls back for Continue Learning', async () => {
+    await dash1.delete('/api/v1/me/progress/frontend/101-html').expect(204);
+
+    const res = await dash1.get('/api/v1/me/progress/summary').expect(200);
+    const { data } = res.body;
+    expect(data.totals).toEqual({ completed: 1, inProgress: 0, notStarted: 1, topics: 2 });
+    expect(data.overallPercent).toBe(50);
+    // no In Progress topic -> first not-completed topic of the most recent roadmap
+    expect(data.continueLearning).toMatchObject({ slug: 'frontend', topicKey: '101-html' });
+  });
+
+  it('counts a skipped status as Not Started', async () => {
+    await dash1
+      .put('/api/v1/me/progress/frontend/101-html')
+      .send({ status: 'skipped' })
+      .expect(200);
+    const res = await dash1.get('/api/v1/me/progress/summary').expect(200);
+    expect(res.body.data.totals.completed).toBe(1);
+    expect(res.body.data.totals.inProgress).toBe(0);
+    expect(res.body.data.totals.notStarted).toBe(1);
+  });
+
+  it('keeps summaries isolated between users', async () => {
+    const res = await dash2.get('/api/v1/me/progress/summary').expect(200);
+    expect(res.body.data.totals).toEqual({ completed: 0, inProgress: 0, notStarted: 0, topics: 0 });
+    expect(res.body.data.roadmaps).toEqual([]);
+    expect(res.body.data.continueLearning).toBeNull();
+  });
+});

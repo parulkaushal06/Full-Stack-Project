@@ -33,6 +33,100 @@ router.get('/progress', (req, res, next) => {
   }
 });
 
+/* Aggregated dashboard summary across every roadmap the user has started.
+   Must be declared BEFORE /progress/:slug or "summary" matches the slug param.
+   Status mapping (PRD): 'done' = Completed, 'learning' = In Progress,
+   no row = Not Started (a cleared status counts as Not Started). */
+router.get('/progress/summary', (req, res, next) => {
+  try {
+    const started = query.all(
+      `SELECT roadmap_slug AS slug FROM user_progress
+        WHERE user_id = ?
+        GROUP BY roadmap_slug
+        ORDER BY MAX(updated_at) DESC`,
+      req.user.id,
+    );
+
+    const roadmaps = started.map(({ slug }) => {
+      const meta = query.get('SELECT slug, title FROM roadmaps WHERE slug = ?', slug);
+      // LEFT JOIN so topics without a progress row show up as Not Started
+      const topics = query.all(
+        `SELECT t.topic_key AS topicKey, t.label, t.order_index AS orderIndex,
+                COALESCE(p.status, '') AS status
+           FROM roadmap_topics t
+           LEFT JOIN user_progress p ON p.roadmap_slug = t.roadmap_slug
+                AND p.topic_key = t.topic_key AND p.user_id = ?
+          WHERE t.roadmap_slug = ?
+          ORDER BY t.order_index ASC`,
+        req.user.id,
+        slug,
+      );
+      const completed = topics.filter((t) => t.status === 'done').length;
+      const inProgress = topics.filter((t) => t.status === 'learning').length;
+      return {
+        slug,
+        title: meta.title,
+        totalTopics: topics.length,
+        completed,
+        inProgress,
+        notStarted: topics.length - completed - inProgress,
+        percent: topics.length ? Math.round((completed / topics.length) * 100) : 0,
+        topics,
+      };
+    });
+
+    // Continue Learning: newest In Progress topic, else the first topic that is
+    // not Completed yet inside the most recently updated roadmap.
+    let continueLearning = query.get(
+      `SELECT p.roadmap_slug AS slug, p.topic_key AS topicKey,
+              r.title AS roadmapTitle, t.label AS topicLabel
+         FROM user_progress p
+         JOIN roadmaps r ON r.slug = p.roadmap_slug
+         JOIN roadmap_topics t ON t.roadmap_slug = p.roadmap_slug
+              AND t.topic_key = p.topic_key
+        WHERE p.user_id = ? AND p.status = 'learning'
+        ORDER BY p.updated_at DESC
+        LIMIT 1`,
+      req.user.id,
+    );
+    if (!continueLearning && started.length) {
+      continueLearning = query.get(
+        `SELECT r.slug, t.topic_key AS topicKey,
+                r.title AS roadmapTitle, t.label AS topicLabel
+           FROM roadmap_topics t
+           JOIN roadmaps r ON r.slug = t.roadmap_slug
+          WHERE t.roadmap_slug = (SELECT roadmap_slug FROM user_progress
+                                   WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1)
+            AND NOT EXISTS (SELECT 1 FROM user_progress p
+                             WHERE p.user_id = ? AND p.roadmap_slug = t.roadmap_slug
+                               AND p.topic_key = t.topic_key AND p.status = 'done')
+          ORDER BY t.order_index ASC
+          LIMIT 1`,
+        req.user.id,
+        req.user.id,
+      );
+    }
+
+    const sum = (key) => roadmaps.reduce((n, r) => n + r[key], 0);
+    const totals = {
+      completed: sum('completed'),
+      inProgress: sum('inProgress'),
+      notStarted: sum('notStarted'),
+      topics: sum('totalTopics'),
+    };
+    return res.json({
+      data: {
+        totals,
+        overallPercent: totals.topics ? Math.round((totals.completed / totals.topics) * 100) : 0,
+        roadmaps,
+        continueLearning: continueLearning || null,
+      },
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 /* Progress summary for one roadmap. */
 router.get('/progress/:slug', validate({ params: slugParams }), (req, res, next) => {
   try {
