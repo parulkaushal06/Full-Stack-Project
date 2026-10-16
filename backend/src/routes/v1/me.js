@@ -35,13 +35,13 @@ router.get('/progress', (req, res, next) => {
 
 /* Aggregated dashboard summary across every roadmap the user has started.
    Must be declared BEFORE /progress/:slug or "summary" matches the slug param.
-   Status mapping (PRD): 'done' = Completed, 'learning' = In Progress,
+   Status mapping (PRD): 'completed' = Completed, 'in_progress' = In Progress,
    no row = Not Started (a cleared status counts as Not Started). */
-router.get('/progress/summary', (req, res, next) => {
+router.get(['/dashboard', '/progress/summary'], (req, res, next) => {
   try {
     const started = query.all(
       `SELECT roadmap_slug AS slug FROM user_progress
-        WHERE user_id = ?
+        WHERE user_id = ? AND status != 'not_started'
         GROUP BY roadmap_slug
         ORDER BY MAX(updated_at) DESC`,
       req.user.id,
@@ -61,8 +61,8 @@ router.get('/progress/summary', (req, res, next) => {
         req.user.id,
         slug,
       );
-      const completed = topics.filter((t) => t.status === 'done').length;
-      const inProgress = topics.filter((t) => t.status === 'learning').length;
+      const completed = topics.filter((t) => t.status === 'completed').length;
+      const inProgress = topics.filter((t) => t.status === 'in_progress').length;
       return {
         slug,
         title: meta.title,
@@ -84,7 +84,7 @@ router.get('/progress/summary', (req, res, next) => {
          JOIN roadmaps r ON r.slug = p.roadmap_slug
          JOIN roadmap_topics t ON t.roadmap_slug = p.roadmap_slug
               AND t.topic_key = p.topic_key
-        WHERE p.user_id = ? AND p.status = 'learning'
+        WHERE p.user_id = ? AND p.status = 'in_progress'
         ORDER BY p.updated_at DESC
         LIMIT 1`,
       req.user.id,
@@ -99,7 +99,7 @@ router.get('/progress/summary', (req, res, next) => {
                                    WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1)
             AND NOT EXISTS (SELECT 1 FROM user_progress p
                              WHERE p.user_id = ? AND p.roadmap_slug = t.roadmap_slug
-                               AND p.topic_key = t.topic_key AND p.status = 'done')
+                               AND p.topic_key = t.topic_key AND p.status = 'completed')
           ORDER BY t.order_index ASC
           LIMIT 1`,
         req.user.id,
